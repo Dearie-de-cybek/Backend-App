@@ -10,7 +10,7 @@ class Bit2MeApi
 
     public function __construct()
     {
-        $this->baseUri = config('bit2me.base_uri');
+        $this->baseUri = env('BIT2ME_BASE_URI');
     }
 
     public function get($endpoint, $params = [], $subaccountId = null)
@@ -32,9 +32,9 @@ class Bit2MeApi
 
     private function getAuthHeaders($endpoint, $body = null)
     {
-        $nonce = time(); // Use UTC timestamp
-        $apiKey = env('BIT2ME_API_KEY');
-        $apiSecret = env('BIT2ME_API_SECRET_KEY');
+        $nonce = time(); 
+        $apiKey = env('API_KEY');
+        $apiSecret = env('API_SECRET_KEY');
         $messageToSign = $this->getClientMessageToSign($nonce, $endpoint, $body);
         $signature = $this->getMessageSignature($messageToSign, $apiSecret);
 
