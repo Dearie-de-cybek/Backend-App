@@ -19,7 +19,7 @@ use Illuminate\Validation\Rules;
 
 class Apis extends Controller
 {
-    //
+    // TODO: #1 Upon successful login, your app would generate an authorization token (e.g., JWT) and send it back to the user's device (typically stored in local storage).
     public function createUser(Request $request)
     {
         try {
@@ -103,5 +103,6 @@ class Apis extends Controller
         return redirect()->back()->with('message','Invalid username or password');
     }
 
+   
    
 }
