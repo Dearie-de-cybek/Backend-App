@@ -22,61 +22,141 @@ class Apis extends Controller
     // TODO: #1 Upon successful login, your app would generate an authorization token (e.g., JWT) and send it back to the user's device (typically stored in local storage).
     public function createUser(Request $request)
     {
-        try {
-            $validateUser = Validator::make($request->all(), [
-                'first_name' => ['required', 'string', 'max:255'],
-                'last_name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-                'password' => ['required',  Rules\Password::defaults()],
-                'confirmpassword' => ['required_with:password', 'same:password', 'min:8'],
-                'security_pin' => ['required', 'min:4'],
-                'confirm_pin' => ['required_with:security_pin', 'same:security_pin', 'min:4'],
-                'phone_number' => [ 'string', 'max:255'], 
-                'date_of_birth' => ['date'], 
-                'country' => [ 'string', 'max:255'], 
-                'state' => [ 'string', 'max:255'],
-                'id_front_photo' => [ 'file', 'max:5000'], 
-                'id_back_photo' => [ 'file', 'max:5000'],
-            ]);
+       // Validation
+       $validator = Validator::make($request->all(), [
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8',
+        'confirmpassword'  => 'required_with:password|same:password|min:8'
+    ]);
 
-            if ($validateUser->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validation Error',
-                    'errors' => $validateUser->errors()
-                ], 401);
-            }
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Validation Error',
+            'errors' => $validator->errors()
+        ], 401);
+    }
 
+    // Create user, send verification email, and return success message
+    $user = User::create([
+        'first_name' => $request->first_name,
+        'last_name' => $request->last_name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'verification_token' => Str::random(40)
+    ]);
 
-            $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'security_pin' => Hash::make($request->security_pin), 
-            'phone_number' => $request->phone_number, 
-            'date_of_birth' => $request->date_of_birth, 
-            'country' => $request->country, 
-            'state' => $request->state, 
-            'id_front_photo' => $request->id_front_photo, 
-            'id_back_photo' => $request->id_back_photo,
-            ]);
+    $user->sendEmailVerificationNotification();
 
-            $user->sendEmailVerificationNotification();
+    return response()->json([
+        'status' => true,
+        'message' => 'Account Created Successfully! Please verify your email address.'
+    ]);
+    }
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Account Created Successfully, Verification link has been sent to your mail',
-                'data' => $user,
-                'token' => $user->createToken('API TOKEN')->plainTextToken
-            ]);
-        } catch (\Throwable $th) {
+    public function verifyEmail(Request $request, $token)
+    {
+        if (!Hash::checkSignature($token, $request->user()->email_for_verification)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Server Error',
-                'errors' => $th->getMessage()
-            ]);
+                'message' => 'Invalid verification token'
+            ], 401);
         }
+
+        $request->user()->markEmailAsVerified();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Email verified successfully! You can now proceed with the next steps.'
+        ]);
+    }
+
+
+    public function createPin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'security_pin' => 'required|min:4',
+            'confirm_pin' => 'required_with:security_pin|same:security_pin|min:4',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 401);
+        }
+
+        $user = Auth::user(); // Assuming user is authenticated
+        $user->security_pin = Hash::make($request->security_pin);
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Security PIN created successfully! Please proceed to upload your documents.'
+        ]);
+    }
+
+    public function uploadDocuments(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id_front_photo' => 'required|file|max:5000|image', // Add image validation rules
+            'id_back_photo' => 'required|file|max:5000|image', // Add image validation rules
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 401);
+        }
+
+        $user = Auth::user(); // Assuming user is authenticated
+
+        // Implement logic to save uploaded files (e.g., store paths in user model)
+        $user->id_front_photo = $request->file('id_front_photo')->store('uploads'); // Example
+        $user->id_back_photo = $request->file('id_back_photo')->store('uploads'); // Example
+
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Documents uploaded successfully! Please complete your profile.'
+        ]);
+    }
+
+    public function updatePersonalInfo(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone_number' => 'string|max:255', // Optional validation for phone number
+            'date_of_birth' => 'date',
+            'country' => 'string|max:255',
+            'state' => 'string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 401);
+        }
+
+        $user = Auth::user(); // Assuming user is authenticated
+        $user->update($request->only([
+            'phone_number',
+            'date_of_birth',
+            'country',
+            'state',
+        ]));
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile information updated successfully! You can now proceed to the app dashboard.'
+        ]);
     }
 
     

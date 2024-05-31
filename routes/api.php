@@ -12,16 +12,17 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 
 
+
+// Registration steps
 Route::post('/register', [Apis::class, 'createUser']);
-Route::post('/login', [Apis::class, 'loginUser'])->name('login');;
+Route::get('/verify-email/{token}', [Apis::class, 'verifyEmail'])->middleware('auth:api');
+
+// Additional steps after email verification (assuming middleware checks for verified email)
+Route::post('/create-pin', [Apis::class, 'createPin'])->middleware('auth:api');
+Route::post('/upload-documents', [Apis::class, 'uploadDocuments'])->middleware('auth:api');
+Route::post('/update-personal-info', [Apis::class, 'updatePersonalInfo'])->middleware('auth:api');
+
+// Existing login route (if applicable)
+Route::post('/login', [Apis::class, 'loginUser'])->name('login');
 
 
-
-
-Route::post('/crypto/accounts', [CryptoController::class, 'createAccount']);
-
-
-
-Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-                ->middleware(['auth', 'signed', 'throttle:6,1'])
-                ->name('verification.verify');

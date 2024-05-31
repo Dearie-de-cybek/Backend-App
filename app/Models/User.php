@@ -18,7 +18,13 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var array<int, string>
      */
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'email',
+        'password',
+        'verification_token'
+    ];
 
     /**
      * The attributes that should be hidden for serialization.

@@ -19,16 +19,16 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password'); 
             $table->rememberToken();
-            $table->string('security_pin'); 
-            $table->string('phone_number');
-            $table->date('date_of_birth'); 
-            $table->string('country');
-            $table->string('state');
+            $table->string('security_pin')->nullable(); 
+            $table->string('phone_number')->nullable();
+            $table->date('date_of_birth')->nullable(); 
+            $table->string('country')->nullable();
+            $table->string('state')->nullable();
             $table->timestamps();
         
           
-            $table->string('id_front_photo');  
-            $table->string('id_back_photo');  
+            $table->string('id_front_photo')->nullable();  
+            $table->string('id_back_photo')->nullable();  
         
             $table->index('email');
         });
