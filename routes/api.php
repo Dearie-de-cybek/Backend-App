@@ -18,6 +18,7 @@ Route::post('/login', [Apis::class, 'loginUser'])->name('login');;
 
 
 
+Route::post('/crypto/accounts', [CryptoController::class, 'createAccount']);
 
 
 
