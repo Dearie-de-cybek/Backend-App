@@ -18,6 +18,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var array<int, string>
      */
+   // TODO: adjust if bug gotten
     protected $fillable = [
         'first_name',
         'last_name',
