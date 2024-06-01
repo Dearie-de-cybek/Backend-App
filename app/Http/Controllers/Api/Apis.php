@@ -56,22 +56,7 @@ class Apis extends Controller
     ]);
     }
 
-    public function verifyEmail(Request $request, $token)
-    {
-        if (!Hash::checkSignature($token, $request->user()->email_for_verification)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid verification token'
-            ], 401);
-        }
-
-        $request->user()->markEmailAsVerified();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Email verified successfully! You can now proceed with the next steps.'
-        ]);
-    }
+    
 
 
     public function createPin(Request $request)
