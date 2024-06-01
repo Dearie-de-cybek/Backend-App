@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\EventCategory;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -14,50 +12,45 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules;
-
-
+use Laravel\Passport\HasApiTokens; 
 
 class Apis extends Controller
 {
-    // TODO: #1 Upon successful login, your app would generate an authorization token (e.g., JWT) and send it back to the user's device (typically stored in local storage).
     public function createUser(Request $request)
     {
-       // Validation
-       $validator = Validator::make($request->all(), [
-        'first_name' => 'required|string|max:255',
-        'last_name' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users',
-        'password' => 'required|string|min:8',
-        'confirmpassword'  => 'required_with:password|same:password|min:8'
-    ]);
+        // Validation
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'confirmpassword' => 'required_with:password|same:password|min:8'
+        ]);
 
-    if ($validator->fails()) {
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 401);
+        }
+
+        // Create user, send verification email, and return success message
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'verification_token' => Str::random(40)
+        ]);
+
+        $user->sendEmailVerificationNotification();
+
         return response()->json([
-            'status' => false,
-            'message' => 'Validation Error',
-            'errors' => $validator->errors()
-        ], 401);
+            'status' => true,
+            'message' => 'Account Created Successfully! Please verify your email address.'
+        ]);
     }
-
-    // Create user, send verification email, and return success message
-    $user = User::create([
-        'first_name' => $request->first_name,
-        'last_name' => $request->last_name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'verification_token' => Str::random(40)
-    ]);
-
-    $user->sendEmailVerificationNotification();
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Account Created Successfully! Please verify your email address.'
-    ]);
-    }
-
-    
-
 
     public function createPin(Request $request)
     {
@@ -74,7 +67,14 @@ class Apis extends Controller
             ], 401);
         }
 
-        $user = Auth::user(); // Assuming user is authenticated
+        $user = Auth::user(); 
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
         $user->security_pin = Hash::make($request->security_pin);
         $user->save();
 
@@ -87,8 +87,8 @@ class Apis extends Controller
     public function uploadDocuments(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id_front_photo' => 'required|file|max:5000|image', // Add image validation rules
-            'id_back_photo' => 'required|file|max:5000|image', // Add image validation rules
+            'id_front_photo' => 'required|file|max:5000|image',
+            'id_back_photo' => 'required|file|max:5000|image',
         ]);
 
         if ($validator->fails()) {
@@ -100,8 +100,13 @@ class Apis extends Controller
         }
 
         $user = Auth::user(); // Assuming user is authenticated
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
 
-        // Implement logic to save uploaded files (e.g., store paths in user model)
         $user->id_front_photo = $request->file('id_front_photo')->store('uploads'); // Example
         $user->id_back_photo = $request->file('id_back_photo')->store('uploads'); // Example
 
@@ -116,7 +121,7 @@ class Apis extends Controller
     public function updatePersonalInfo(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone_number' => 'string|max:255', // Optional validation for phone number
+            'phone_number' => 'string|max:255',
             'date_of_birth' => 'date',
             'country' => 'string|max:255',
             'state' => 'string|max:255',
@@ -131,6 +136,13 @@ class Apis extends Controller
         }
 
         $user = Auth::user(); // Assuming user is authenticated
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
         $user->update($request->only([
             'phone_number',
             'date_of_birth',
@@ -144,30 +156,38 @@ class Apis extends Controller
         ]);
     }
 
-    
-   
     public function loginUser(Request $request)
     {
-
-        //code...
-        $validateUser = $request->validate(
-            [
-                'email' => 'required|email',
-                'password' => 'required'
-            ]
-        );
-
-
+        $validateUser = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
 
         if (Auth::attempt($request->only(['email', 'password']))) {
+            $user = Auth::user();
+            
+            // Generate a unique token for the user
+            $token = $this->generateToken();
+    
+            // Store the token in the database
+            $user->update(['api_token' => $token]);
+    
+            // Return the token in the response
             return response()->json([
-                'message' => 'Login Success'
+                'status' => true,
+                'message' => 'Login Success',
+                'token' => $token
             ]);
         }
-
-        return redirect()->back()->with('message','Invalid username or password');
+    
+        return response()->json([
+            'status' => false,
+            'message' => 'Invalid username or password'
+        ], 401);
     }
 
-   
-   
+    protected function generateToken()
+{
+    return Str::random(60); 
+}
 }
