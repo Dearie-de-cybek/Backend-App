@@ -22,7 +22,7 @@ Route::get('/verify-email/{token}', [Apis::class, 'verifyEmail']);
 
 
 Route::get('/login', [Apis::class, 'loginUser'])->name('login');
-Route::post('/login', [Apis::class, 'loginUser'])->name('login');
+Route::post('/login', [Apis::class, 'loginUser']);
 
 
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
