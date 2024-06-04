@@ -87,7 +87,7 @@ class Apis extends Controller
             'message' => 'Security PIN created successfully! Please proceed to upload your documents.',
             'data' => [
                 'id' => $user->id,
-                'security_pin' => $security_pin
+                'security_pin' => $user->security_pin
             ]
         ]);
     }
