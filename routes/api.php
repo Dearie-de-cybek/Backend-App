@@ -16,13 +16,15 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 });
 
 
-Route::post('/register', [RegisteredUserController::class, 'store'])
-                ->middleware('guest')
-                ->name('register');
-                
- Route::get('/login', [AuthenticatedSessionController::class, 'store'])
-                ->middleware('guest')
-                ->name('login');
+
+
+// Registration steps
+Route::post('/register', [Apis::class, 'createUser']);
+Route::get('/verify-email/{token}', [Apis::class, 'verifyEmail']);
+
+
+Route::get('/login', [Apis::class, 'loginUser'])->name('login');
+Route::post('/login', [Apis::class, 'loginUser']);
 
 
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
