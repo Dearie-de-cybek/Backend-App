@@ -13,12 +13,26 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Route for email verification
+Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['auth', 'signed'])
+    ->name('verification.verify');
 
+// Route to show the email verification notice
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+// Route to resend the email verification link
+// Route::post('/email/verification-notification', function (Request $request) {
+//     $request->user()->sendEmailVerificationNotification();
+
+//     return back()->with('message', 'Verification link sent!');
+// })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 
 // Registration steps
 Route::post('/register', [Apis::class, 'createUser']);
-Route::get('/verify-email/{token}', [Apis::class, 'verifyEmail']);
 
 
 Route::get('/login', [Apis::class, 'loginUser'])->name('login');

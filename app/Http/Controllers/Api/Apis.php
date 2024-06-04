@@ -24,7 +24,6 @@ class Apis extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'confirmpassword' => 'required_with:password|same:password|min:8'
         ]);
 
         if ($validator->fails()) {
@@ -48,15 +47,19 @@ class Apis extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Account Created Successfully! Please verify your email address.'
+            'message' => 'Account Created Successfully! Please verify your email address.',
+            'user' => [
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+            ]
         ]);
     }
 
     public function createPin(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'security_pin' => 'required|min:4',
-            'confirm_pin' => 'required_with:security_pin|same:security_pin|min:4',
+            'security_pin' => 'required|min:4'
         ]);
 
         if ($validator->fails()) {
@@ -75,7 +78,7 @@ class Apis extends Controller
             ], 401);
         }
 
-        $user->security_pin = Hash::make($request->security_pin);
+        $user->security_pin = $request->security_pin;
         $user->save();
 
         return response()->json([
@@ -107,8 +110,8 @@ class Apis extends Controller
             ], 401);
         }
 
-        $user->id_front_photo = $request->file('id_front_photo')->store('uploads'); // Example
-        $user->id_back_photo = $request->file('id_back_photo')->store('uploads'); // Example
+        $user->id_front_photo = $request->file('id_front_photo')->storeAs('public', 'storage');
+        $user->id_back_photo = $request->file('id_back_photo')->storeAs('public', 'storage'); 
 
         $user->save();
 
