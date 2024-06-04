@@ -18,7 +18,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 
 
-// Registration steps
+
 Route::post('/register', [Apis::class, 'createUser']);
 Route::get('/verify-email/{token}', [Apis::class, 'verifyEmail']);
 
@@ -43,28 +43,13 @@ Route::post('/email/verification-notification', [EmailVerificationNotificationCo
                 ->middleware(['auth', 'throttle:6,1'])
                 ->name('verification.send');
 
-Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
-                ->middleware('auth')
-                ->name('logout');
 
 
 
-// Route::get('/login', [Apis::class, 'loginUser'])->name('login');
-// Route::post('/login', [Apis::class, 'loginUser']);
-
-
-// Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
-//                 ->middleware('guest')
-//                 ->name('password.email');
-
-// Route::post('/reset-password', [NewPasswordController::class, 'store'])
-//                 ->middleware('guest')
-//                 ->name('password.store');
-
-// Route::middleware('auth:api')->group(function () {
-//     Route::post('/create-pin', [Apis::class, 'createPin']);
-//     Route::post('/upload-documents', [Apis::class, 'uploadDocuments']);
-//     Route::post('/update-personal-info', [Apis::class, 'updatePersonalInfo']);
-// });
+Route::middleware('auth:api')->group(function () {
+    Route::post('/create-pin', [Apis::class, 'createPin']);
+    Route::post('/upload-documents', [Apis::class, 'uploadDocuments']);
+    Route::post('/update-personal-info', [Apis::class, 'updatePersonalInfo']);
+});
 
 

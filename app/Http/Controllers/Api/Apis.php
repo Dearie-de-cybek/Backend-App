@@ -23,40 +23,44 @@ class Apis extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'confirmpassword' => 'required_with:password|same:password|min:8'
+            'password' => 'required|string|min:8'
         ]);
 
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Validation Error',
-    //             'errors' => $validator->errors()
-    //         ], 401);
-    //     }
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 401);
+        }
 
       
-    //     $user = User::create([
-    //         'first_name' => $request->first_name,
-    //         'last_name' => $request->last_name,
-    //         'email' => $request->email,
-    //         'password' => Hash::make($request->password),
-    //         'verification_token' => Str::random(40)
-    //     ]);
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password)
+        ]);
 
-    //     $user->sendEmailVerificationNotification();
+        $user->sendEmailVerificationNotification();
 
         return response()->json([
             'status' => true,
-            'message' => 'Account Created Successfully! Please verify your email address.'
+            'message' => 'Account Created Successfully! Please verify your email address.',
+            'data' => [
+                'id' => $user->id,
+                'first_name' => $user->first_name, 
+                'last_name' => $user->last_name, 
+                'email' => $user->email,
+                'password' => $user->password
+            ]
         ]);
     }
 
     public function createPin(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'security_pin' => 'required|min:4',
-            'confirm_pin' => 'required_with:security_pin|same:security_pin|min:4',
+            'security_pin' => 'required|min:4'
         ]);
 
         if ($validator->fails()) {
@@ -80,7 +84,11 @@ class Apis extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Security PIN created successfully! Please proceed to upload your documents.'
+            'message' => 'Security PIN created successfully! Please proceed to upload your documents.',
+            'data' => [
+                'id' => $user->id,
+                'security_pin' => $security_pin
+            ]
         ]);
     }
 
@@ -115,7 +123,12 @@ class Apis extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Documents uploaded successfully! Please complete your profile.'
+            'message' => 'Documents uploaded successfully! Please complete your profile.',
+            'data' => [
+                'id' => $user->id,
+                'id_front_photo' => $user->id_front_photo,
+                'id_back_photo' => $user->id_back_photo
+            ]
         ]);
     }
 
@@ -153,7 +166,14 @@ class Apis extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Profile information updated successfully! You can now proceed to the app dashboard.'
+            'message' => 'Profile information updated successfully! You can now proceed to the app dashboard.',
+            'data' => [
+                'id' => $user->id,
+                'phone_number' => $user->phone_number,
+                'date_of_birth' => $user->date_of_birth,
+                'country' => $user->country,
+                'state' => $user->state,
+            ]
         ]);
     }
 
