@@ -18,40 +18,34 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): Response
+    public function store(Request $request)
     {
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'security_pin' =>['required'], 
-            'phone_number' => [ 'string', 'max:255'], 
-            'date_of_birth' => [ 'date'], 
-            'country' => [ 'string', 'max:255'], 
-            'state' => [ 'string', 'max:255'],
-            'id_front_photo' => [ 'file', 'max:5000'], 
-            'id_back_photo' => [ 'file', 'max:5000'],
+            'password' => ['required', 'string', 'min:8'],
         ]);
 
         $user = User::create([
-            'first_name' => $request->name,
-            'last_name' => $request->name,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'security_pin' => $request->security_pin, 
-            'phone_number' => $request->phone_number, 
-            'date_of_birth' => $request->date_of_birth, 
-            'country' => $request->country, 
-            'state' => $request->state, 
-            'id_front_photo' => $request->id_front_photo, 
-            'id_back_photo' => $request->id_back_photo,
         ]);
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        return response()->noContent();
+       return response()->json([
+        'status' => true,
+        'message' => 'Account Created successfully',
+        'user' => [
+            'id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email,
+            'password' => $user->password
+        ]
+       ]);
     }
 }

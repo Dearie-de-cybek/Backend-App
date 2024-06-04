@@ -16,45 +16,45 @@ use Laravel\Passport\HasApiTokens;
 
 class Apis extends Controller
 {
-    public function createUser(Request $request)
-    {
-        // Validation
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
+    // public function createUser(Request $request)
+    // {
+      
+    //     $validator = Validator::make($request->all(), [
+    //         'first_name' => 'required|string|max:255',
+    //         'last_name' => 'required|string|max:255',
+    //         'email' => 'required|string|email|max:255|unique:users',
+    //         'password' => 'required|string|min:8',
+    //     ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors()
-            ], 401);
-        }
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Validation Error',
+    //             'errors' => $validator->errors()
+    //         ], 401);
+    //     }
 
-        // Create user, send verification email, and return success message
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'verification_token' => Str::random(40)
-        ]);
+      
+    //     $user = User::create([
+    //         'first_name' => $request->first_name,
+    //         'last_name' => $request->last_name,
+    //         'email' => $request->email,
+    //         'password' => Hash::make($request->password),
+    //         'verification_token' => Str::random(40)
+    //     ]);
 
-        $user->sendEmailVerificationNotification();
+    //     $user->sendEmailVerificationNotification();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Account Created Successfully! Please verify your email address.',
-            'user' => [
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'email' => $user->email,
-            ]
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Account Created Successfully! Please verify your email address.',
+    //         'user' => [
+    //             'first_name' => $user->first_name,
+    //             'last_name' => $user->last_name,
+    //             'email' => $user->email,
+    //         ]
+    //     ]);
+    // }
 
     public function createPin(Request $request)
     {
@@ -110,8 +110,9 @@ class Apis extends Controller
             ], 401);
         }
 
-        $user->id_front_photo = $request->file('id_front_photo')->storeAs('public', 'storage');
-        $user->id_back_photo = $request->file('id_back_photo')->storeAs('public', 'storage'); 
+        $user->id_front_photo = $request->file('id_front_photo')->store('public');
+        $user->id_back_photo = $request->file('id_back_photo')->store('public');
+        
 
         $user->save();
 
